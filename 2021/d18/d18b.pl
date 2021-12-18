@@ -3,10 +3,9 @@
 my @data;
 my $result=0;
 
-while(my $ln=<STDIN>) {
-    chomp $ln;
-    push @data, $ln;
-}
+
+my @data= (<STDIN>);
+chomp @data;
 
 my $maxmag=0;
 
@@ -74,7 +73,6 @@ sub getmagnitude {
 my $lastlnum=0;
 my $lastlside='';
 my $nextr=0;
-my $gaction=0;
 
 sub explode {
     my $ld=$_[0];
@@ -86,7 +84,6 @@ sub explode {
         $lastlnum=0;
         $lastlside='';
         $nextr=0;
-        $gaction=0;
     }
 
     if($depth>=4 && (ref($ld->{l}) eq '') && (ref($ld->{r}) eq '' && !$action)) {

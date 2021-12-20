@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use Data::Dumper;
+use Term::ANSIScreen qw(cls locate);
 
 my $iea;
 my @startimage;
@@ -11,6 +12,8 @@ my $answer2=0;
 sub printimage {
     my @image=@{$_[0]};
     my $count=0;
+
+    print cls().locate();
 
     foreach(@image) {
         foreach(@{$_}) {
@@ -34,25 +37,12 @@ while(my $line=<STDIN>) {
     $lines++;
     next if($line eq "");
 
-    push @image, [ '.','.','.', '.','.', (split //,$line), '.','.','.','.','.' ];
+    push @image, [  '.',(split //,$line),'.' ];
 
 }
 
-unshift @image, [ map {'.'} (0..(@{$image[0]}-1))];
-unshift @image, [ map {'.'} (0..(@{$image[0]}-1))];
-unshift @image, [ map {'.'} (0..(@{$image[0]}-1))];
-unshift @image, [ map {'.'} (0..(@{$image[0]}-1))];
-unshift @image, [ map {'.'} (0..(@{$image[0]}-1))];
-push @image, [ map {'.'} (0..(@{$image[0]}-1))];
-push @image, [ map {'.'} (0..(@{$image[0]}-1))];
-push @image, [ map {'.'} (0..(@{$image[0]}-1))];
-push @image, [ map {'.'} (0..(@{$image[0]}-1))];
-push @image, [ map {'.'} (0..(@{$image[0]}-1))];
-
-
-print "$iea\n";
-print "Lit: ".printimage(\@image)."\n";
-
+ unshift @image, [ map {'.'} (0..(@{$image[0]}-1))];
+ push @image, [ map {'.'} (0..(@{$image[0]}-1))];
 
 foreach $turn (0..49) {
     my $sx=(0+@{$image[0]});
@@ -68,8 +58,6 @@ foreach $turn (0..49) {
 
     my @newimage=();
 
-    print"sx: $sx sy: $sy\n";
-
     @newimage=map { [ map {$add} (0..$sx+1)]} (0..$sy+1);
 
     unshift @image, [ map {$ins} (0..($sx-1)) ];
@@ -78,9 +66,6 @@ foreach $turn (0..49) {
     @image=map { [$ins, @{$_},$ins]} @image;
 
     $sx+=2; $sy+=2;
-
-    printimage(\@image);
-    print "\n";
 
     foreach $y (1..($sy-2)) {
         foreach $x (1..($sx-2)) {
@@ -109,22 +94,5 @@ foreach $turn (0..49) {
     @image=@newimage;
 }
 
-print "Answer 1: $answer1\n";
-
-$answer1=0;
-
-my $sx=(0+@{$image[0]});
-my $sy=(0+@image);
-
-
-print "sx: $sx sy: $sy\n";
-
-
-foreach $y (3..($sy-4)) {
-    foreach $x (3..($sx-4)) {
-        $answer1++ if($image[$y][$x] eq '#');
-    }
-}
-
-print "Answer 1: $answer1\n";
+print "Answer (15653): $answer1\n";
 

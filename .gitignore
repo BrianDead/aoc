@@ -4,4 +4,10 @@
 # precompiled files
 .precomp
 lib/.precomp
+in.*
+test*.pl
+out*
+a.*
 
+
+in*

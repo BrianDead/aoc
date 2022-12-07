@@ -229,15 +229,8 @@ while(sum(@s_fixed)!=$n_scanner) {
                 if(!@pairs) {
                     print "None the other way either\n";
                     next;
-                } elsif (@pairs<12) {
-                    print "Not enough the other way either\n";
-#                    next;
                 }
                 $b1a='b1b'; $b1b='b1a';$b2a='b2b';$b2b='b2a'; $txa=$sb; $txb=$sa
-
-            } elsif (@pairs<12) {
-                print "Not enough matches $sa1 -> $sb1 : ".(0+@pairs)."\n";
-#                next;
             }
 
             my @o_cand=();
@@ -284,7 +277,6 @@ while(sum(@s_fixed)!=$n_scanner) {
 
             my @sabeacons=map { [normalize($_, $sa)] } map { $scanner[$sa][$pairs[$ip]->{$_}] } ($b1a,$b2a);
             my @sbbeacons=map { $scanner[$sb][$pairs[$ip]->{$_}] } ($bw>0) ? ($b1b, $b2b) : ($b2b, $b1b);
-#            my @sbbeacons2=map { $scanner[$sb][$pairs[$ip]->{$_}] } ($b1b, $b2b);
             
             print "sa: beacon 1 (@{$sabeacons[0]}) beacon 2 (@{$sabeacons[1]})\n";
 
@@ -294,7 +286,6 @@ while(sum(@s_fixed)!=$n_scanner) {
 
             print "Transforming sb:$sb with transform $ft\n";
             @sbbeacons_t= map { my @r=transform(\@{$sbbeacons[$_]}, abs($ft) ); print "@r\n"; \@r } (0,1) ;
-#            @sbbeacons_t=map { transform(\@{$sbbeacons[$_]}, abs($ft) ) } (0,1) ;
 
             print "sb transformed: beacon 1 (@{$sbbeacons_t[0]}) beacon 2 (@{$sbbeacons_t[1]})\n\n";
 

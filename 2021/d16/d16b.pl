@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-
-
 my @raw= map {chomp; split//} <STDIN>;
 my @data= map { my $b=sprintf("%04b", hex($_)); split //, $b } @raw;
 

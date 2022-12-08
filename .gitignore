@@ -8,3 +8,4 @@ test*.pl
 out*
 a.*
 .DS_Store
+*.big

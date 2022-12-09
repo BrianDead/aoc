@@ -2,20 +2,7 @@
 
 use strict;
 
-my @board=();
-my @tpos=(0,0);
-my @hpos=(0,0);
-my %kpos=( 'Hx'=>0, 'Hy'=>0,
-    '1x'=>0, '1y'=>0,
-    '2x'=>0, '2y'=>0,
-    '3x'=>0, '3y'=>0,
-    '4x'=>0, '4y'=>0,
-    '5x'=>0, '5y'=>0,
-    '6x'=>0, '6y'=>0,
-    '7x'=>0, '7y'=>0,
-    '8x'=>0, '8y'=>0,
-    '9x'=>0, '9y'=>0
-    );
+my %kpos=( 'Hx'=>0, 'Hy'=>0);
 my @knots=('H','1','2','3','4','5','6','7','8','9');
 my @touched=();
 
@@ -53,20 +40,15 @@ while(<STDIN>) {
             my $dy=$kpos{$knots[$i-1].'y'}-$kpos{$knots[$i].'y'};
 #            printf("Comparing %s to %s (%d, %d)\n", $knots[$i-1], $knots[$i], $dx, $dy);
 
-            if($dx>1) {
-                $kpos{$knots[$i].'x'}+=1;
+            print("ALARM $dx, $dy\n") if(abs($dx)>2 || abs($dy)>2);
+
+            if(abs($dx)>1){
+                $kpos{$knots[$i].'x'}+=$dx/2;
                 $kpos{$knots[$i].'y'}+=($dy<0?-1:1) if($dy!=0);
-            } elsif($dx<-1) {
-                $kpos{$knots[$i].'x'}-=1;
-                $kpos{$knots[$i].'y'}+=($dy<0?-1:1) if($dy!=0);
-            }  elsif($dy<-1) {
-                $kpos{$knots[$i].'y'}-=1;
-                $kpos{$knots[$i].'x'}+=($dx<0?-1:1) if($dx!=0);
-            }  elsif($dy>1) {
-                $kpos{$knots[$i].'y'}+=1;
+            } elsif(abs($dy)>1) {
+                $kpos{$knots[$i].'y'}+=$dy/2;
                 $kpos{$knots[$i].'x'}+=($dx<0?-1:1) if($dx!=0);
             }
-            
         }
     }
 }

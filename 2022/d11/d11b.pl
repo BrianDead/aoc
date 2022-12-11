@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
 use strict;
-use Data::Dumper;
 
 my %monkeys=();
 my $monkey;
@@ -19,8 +18,6 @@ sub applyop {
 while (<STDIN>) {
     chomp;
     if($_ eq "") {
-        printf("Done monkey %d\n", $monkey);
-        print Dumper $monkeys{$monkey};
         $tm=$monkey if ($monkey > $tm);
         next;
         }    
@@ -47,21 +44,16 @@ while (<STDIN>) {
     }
 }
 
-printf("pm is %d\n\n", $pm);
-
 foreach my $round (1..10000) {
     foreach my $m (0..$tm) {
-#        printf("Round %d Monkey %d\n", $round, $m);
         my $i=0;
         my @tmi=@{$monkeys{$m}{"items"}};
         foreach my $wl (@tmi) {
             $monkeys{$m}{"inspected"}++;
             $wl=applyop($monkeys{$m}{"op"}, $monkeys{$m}{"q"}, $wl);
             if($wl%$monkeys{$m}{"test"}==0) {
-#                printf("Test true - to monkey %d\n", $monkeys{$m}{"true"});
                 push @{$monkeys{$monkeys{$m}{"true"}}{"items"}}, $wl;
             } else {
-#                printf("Test false - to monkey %d\n", $monkeys{$m}{"false"});
                 push @{$monkeys{$monkeys{$m}{"false"}}{"items"}}, $wl;
             }
             shift(@{$monkeys{$m}{"items"}});
@@ -81,16 +73,3 @@ my $a2=0;
 my @ins=map{ $monkeys{$_}{"inspected"} } sort { $monkeys{$b}{"inspected"} <=> $monkeys{$a}{"inspected"} } keys %monkeys;
 
 printf("Answer is %d\n\n", $ins[0]*$ins[1]);
-
-foreach (sort { $monkeys{$b}{"inspected"} <=> $monkeys{$a}{"inspected"} } keys %monkeys) {
-    my $ins=$monkeys{$_}{"inspected"};
-    printf("Monkey %s did %d\n", $_, $ins);
-    if($ins>$a1) {
-        $a2=$a1;
-        $a1=$ins;
-    } elsif($ins>$a2) {
-        $a2=$ins;
-    }
-}
-
-printf("The Answer is %d\n", $a1*$a2);

@@ -7,7 +7,7 @@
 # for the start point with the lowest cost. Seemed to work.
 # Made it more efficient by keeping hash of nodes in play instead of iterating
 # Made it even quicker by using the index hash directly instead of converting
-# to x,y for nodedist and intree
+# to x,y for nodedist and intree - 0.05s vs 0.81s
 
 use strict;
 use Data::Dumper;

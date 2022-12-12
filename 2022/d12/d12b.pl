@@ -6,6 +6,8 @@
 # and calculate the grid starting from the endpoint, then scan the grid
 # for the start point with the lowest cost. Seemed to work.
 # Made it more efficient by keeping hash of nodes in play instead of iterating
+# Made it even quicker by using the index hash directly instead of converting
+# to x,y for nodedist and intree
 
 use strict;
 use Data::Dumper;
@@ -21,15 +23,19 @@ my @intree=();
 my %cl=(); # Check list
 my $huge=99999999;
 
-foreach my $y (0..($h-1)) {
-    my @ndrow=();
-    my @itrow=();
-    push(@nodedist,\@ndrow);
-    push(@intree,\@itrow);
-    foreach my $x (0..($w-1)) {
-        $nodedist[$y][$x]=$huge;
-        $intree[$y][$x]=0;
-    }
+# foreach my $y (0..($h-1)) {
+#     # my @ndrow=();
+#     # my @itrow=();
+#     # push(@nodedist,\@ndrow);
+#     # push(@intree,\@itrow);
+#     foreach my $x (0..($w-1)) {
+#         $nodedist[$y][$x]=$huge;
+#         $intree[$y][$x]=0;
+#     }
+# }
+
+foreach (0..getIndex($w-1,$h-1)) {
+    $nodedist[$_]=$huge;
 }
 
 my $x=0;
@@ -50,7 +56,7 @@ foreach (@grid) {
 
 printf("Start at %d, %d - End at %d, %d - Grid w=%d, h=%d\n", @s, @e, $w, $h);
 
-$nodedist[$e[1]][$e[0]]=0;
+$nodedist[getIndex(@e)]=0;
 $cl{getIndex(@e)}=1;
 
 foreach my $y (0..($h-1)) {
@@ -59,22 +65,22 @@ foreach my $y (0..($h-1)) {
         ($nx, $ny)=minpath();
         last if($nx==-1);
 
-        $intree[$ny][$nx]=1;
+        $intree[getIndex($nx,$ny)]=1;
         delete $cl{getIndex($nx, $ny)};
 
         foreach my $a ([0,-1],[-1,0],[1,0],[0,1]) { 
             my $tx=$nx+$a->[0]; my $ty=$ny+$a->[1];
             if($tx>=0 && $tx<=($w-1) && $ty>=0 && $ty<=($h-1) && testH($tx, $ty, $grid[$ny][$nx])) {
-                my $newd=$nodedist[$ny][$nx]+1;
-                $nodedist[$ty][$tx]=$newd if($newd<$nodedist[$ty][$tx]);
-                $cl{getIndex($tx, $ty)}=1 if(!$intree[$ty][$tx]);
+                my $newd=$nodedist[getIndex($nx, $ny)]+1;
+                $nodedist[getIndex($tx,$ty)]=$newd if($newd<$nodedist[getIndex($tx,$ty)]);
+                $cl{getIndex($tx, $ty)}=1 if(!$intree[getIndex($tx, $ty)]);
             }
         }
     }
     last if($nx==-1);
 }
 
-printf("Part 1 Answer is %d\n", $nodedist[$s[1]][$s[0]]);
+printf("Part 1 Answer is %d\n", $nodedist[getIndex(@s)]);
 
 my $answer=$huge;
 
@@ -82,7 +88,7 @@ foreach my $y (0..($h-1)) {
     foreach my $x (0..($w-1)) {
         if($grid[$y][$x] eq "a" || $grid[$y][$x] eq "S") {
 #            printf("%s at %d, %d: %d\n", $grid[$y][$x], $x, $y, $nodedist[$y][$x]);
-            $answer=$nodedist[$y][$x] if($nodedist[$y][$x]<$answer);
+            $answer=$nodedist[getIndex($x,$y)] if($nodedist[getIndex($x,$y)]<$answer);
         }
     }
 }
@@ -100,13 +106,11 @@ sub getXY {
 sub minpath {
     my $xmin=-1; my $ymin=-1;
     my $dmin=$huge;
-
+ 
     foreach (keys %cl) {
-        my ($x, $y)=getXY($_);
-#        printf("min test %d,%d = %d vs %d - intree %d\n", $x, $y, $nodedist[$y][$x], $dmin, $intree[$y][$x]);
-        if(!$intree[$y][$x] && $nodedist[$y][$x]<$dmin) {
-            $xmin=$x; $ymin=$y;
-            $dmin=$nodedist[$y][$x];
+        if(!$intree[$_] && $nodedist[$_]<$dmin) {
+            $dmin=$nodedist[$_];
+            ($xmin,$ymin)=getXY($_);
         }
     }
     return ($xmin, $ymin);

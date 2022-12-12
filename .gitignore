@@ -9,4 +9,4 @@ out*
 a.*
 .DS_Store
 *.big
-scr
+scr*

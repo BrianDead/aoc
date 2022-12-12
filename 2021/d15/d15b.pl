@@ -29,6 +29,8 @@ my @intree;
 my @nodes=();
 my $maxnodes;
 
+my $visited=0;
+
 sub setdistance {
     my ($x, $y, $dist)=@_;
     my $first=!defined($nodedist[$y][$x]);
@@ -44,6 +46,7 @@ sub minpath {
     my $dmin=$huge;
 
     while (my ($k, $i) = each @nodes) {
+        $visited++;
         if($nodedist[$i->[1]][$i->[0]]<$dmin) {
             $imin=$i;
             $kmin=$k;
@@ -74,7 +77,7 @@ foreach my $iy (0..$maxy-1) {
         my $ny=$next->[1];
         my $nx=$next->[0];
 
-        print "Next ($ny, $nx)...\r";
+#        print "Next ($ny, $nx)...\n";
 
         $intree[$ny][$nx]=1;
 
@@ -98,4 +101,4 @@ print "\n";
 
 $answer1=$nodedist[$maxy-1][$maxx-1];
 
-print "Answer1: $answer1\nMaxnodes: $maxnodes\n";
+print "Answer1: $answer1\nMaxnodes: $maxnodes\nVisited: $visited\n";

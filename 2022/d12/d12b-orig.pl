@@ -5,7 +5,6 @@
 # quickest of multiple potential start points, just switch it into reverse
 # and calculate the grid starting from the endpoint, then scan the grid
 # for the start point with the lowest cost. Seemed to work.
-# Made it more efficient by keeping hash of nodes in play instead of iterating
 
 use strict;
 use Data::Dumper;
@@ -18,7 +17,6 @@ my @s=(-1,-1); my @e=(-1,-1);
 
 my @nodedist=();
 my @intree=();
-my %cl=(); # Check list
 my $huge=99999999;
 
 foreach my $y (0..($h-1)) {
@@ -51,7 +49,6 @@ foreach (@grid) {
 printf("Start at %d, %d - End at %d, %d - Grid w=%d, h=%d\n", @s, @e, $w, $h);
 
 $nodedist[$e[1]][$e[0]]=0;
-$cl{getIndex(@e)}=1;
 
 foreach my $y (0..($h-1)) {
     my $nx; my $ny;
@@ -60,15 +57,22 @@ foreach my $y (0..($h-1)) {
         last if($nx==-1);
 
         $intree[$ny][$nx]=1;
-        delete $cl{getIndex($nx, $ny)};
 
-        foreach my $a ([0,-1],[-1,0],[1,0],[0,1]) { 
-            my $tx=$nx+$a->[0]; my $ty=$ny+$a->[1];
-            if($nx>0 && $nx<($w-1) && $ny>0 && $ny<($h-1) && testH($tx, $ty, $grid[$ny][$nx])) {
-                my $newd=$nodedist[$ny][$nx]+1;
-                $nodedist[$ty][$tx]=$newd if($newd<$nodedist[$ty][$tx]);
-                $cl{getIndex($tx, $ty)}=1 if(!$intree[$ty][$tx]);
-            }
+        if($ny>0 && testH($nx, $ny-1, $grid[$ny][$nx])) { 
+            my $newd=$nodedist[$ny][$nx]+1;
+            $nodedist[$ny-1][$nx]=$newd if($newd<$nodedist[$ny-1][$nx]);
+        }
+        if($nx>0 && testH($nx-1, $ny, $grid[$ny][$nx])) { 
+            my $newd=$nodedist[$ny][$nx]+1;
+            $nodedist[$ny][$nx-1]=$newd if($newd<$nodedist[$ny][$nx-1]);
+        }
+        if($nx<($w-1) && testH($nx+1, $ny, $grid[$ny][$nx])) { 
+            my $newd=$nodedist[$ny][$nx]+1;
+            $nodedist[$ny][$nx+1]=$newd if($newd<$nodedist[$ny][$nx+1]);
+        }
+        if($ny<($h-1) && testH($nx, $ny+1, $grid[$ny][$nx])) { 
+            my $newd=$nodedist[$ny][$nx]+1;
+            $nodedist[$ny+1][$nx]=$newd if($newd<$nodedist[$ny+1][$nx]);
         }
     }
     last if($nx==-1);
@@ -89,26 +93,20 @@ foreach my $y (0..($h-1)) {
 
 printf("Part 2 Answer is %d\n", $answer);
 
-sub getIndex {
-    return ($_[0]+$_[1]*$w);
-}
-
-sub getXY {
-    return ($_[0]%$w,int($_[0]/$w));
-}
-
 sub minpath {
     my $xmin=-1; my $ymin=-1;
     my $dmin=$huge;
 
-    foreach (keys %cl) {
-        my ($x, $y)=getXY($_);
-#        printf("min test %d,%d = %d vs %d - intree %d\n", $x, $y, $nodedist[$y][$x], $dmin, $intree[$y][$x]);
-        if(!$intree[$y][$x] && $nodedist[$y][$x]<$dmin) {
-            $xmin=$x; $ymin=$y;
-            $dmin=$nodedist[$y][$x];
+    foreach my $y (0..($h-1)) {
+        foreach my $x (0..($w-1)) {
+#            printf("min test %d,%d = %d vs %d - intree %d\n", $x, $y, $nodedist[$y][$x], $dmin, $intree[$y][$x]);
+            if(!$intree[$y][$x] && $nodedist[$y][$x]<$dmin) {
+                $xmin=$x; $ymin=$y;
+                $dmin=$nodedist[$y][$x];
+            }
         }
     }
+#    print("$xmin, $ymin\n");
     return ($xmin, $ymin);
 }
 
@@ -117,8 +115,13 @@ sub testH {
     my $f=$grid[$_[1]][$_[0]];
     my $t=$_[2];
 
+#    printf("Inputs %d %d %s\n", $_[0], $_[1], $_[2]);
+
     $f="a" if($f eq "S");
     $t="z" if($t eq "E");
 
+#    printf("Testing %s to %s (%d to %d)\n", $f, $t, ord($f), ord($t));
+
     return((ord($t)-ord($f))<=1);
 }
+

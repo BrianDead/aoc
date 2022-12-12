@@ -64,7 +64,7 @@ foreach my $y (0..($h-1)) {
 
         foreach my $a ([0,-1],[-1,0],[1,0],[0,1]) { 
             my $tx=$nx+$a->[0]; my $ty=$ny+$a->[1];
-            if($nx>0 && $nx<($w-1) && $ny>0 && $ny<($h-1) && testH($tx, $ty, $grid[$ny][$nx])) {
+            if($tx>=0 && $tx<=($w-1) && $ty>=0 && $ty<=($h-1) && testH($tx, $ty, $grid[$ny][$nx])) {
                 my $newd=$nodedist[$ny][$nx]+1;
                 $nodedist[$ty][$tx]=$newd if($newd<$nodedist[$ty][$tx]);
                 $cl{getIndex($tx, $ty)}=1 if(!$intree[$ty][$tx]);

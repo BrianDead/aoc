@@ -3,12 +3,20 @@
 use strict;
 use List::Util qw(min max);
 
-sub getIndex {
+sub getIndex1 {
     return $_[0].",".$_[1];
 }
 
-sub getXY {
+sub getXY1 {
     return split /,/,$_[0];
+}
+
+sub getIndex {
+    return $_[0]+$_[1]*10000;
+}
+
+sub getXY {
+    return ($_[0]%10000, int($_[0]/10000));
 }
 
 
@@ -22,7 +30,7 @@ while(<STDIN>) {
     my $x1=-1; my $y1=-1;
 
     foreach my $l (@path) {
-        my ($x,$y)=getXY($l);
+        my ($x,$y)=getXY1($l);
         if($x1>0) {
             if($x==$x1) {
                 $maxx=$x if($x>$maxx);
@@ -53,8 +61,6 @@ pg();
 my $answer=0;
 my $another=1;
 my $floor=$maxy+2;
-
-
 
 do {
     my $sx=500; my $sy=0; my $stopped=0;

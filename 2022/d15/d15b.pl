@@ -36,7 +36,7 @@ my @squares=map {
     [$sx,$sy, abs($sx-$bx)+abs($sy-$by)]
 } <STDIN>;
 
-print Dumper \@squares;
+#print Dumper \@squares;
 
 foreach my $ty ($cmin..$cmax) {
     foreach my $sq (@squares) {

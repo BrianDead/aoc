@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
+use Data::Dumper;
 use List::Util qw(min max);
 
 sub getIndex1 {
@@ -20,9 +21,10 @@ sub getXY {
 }
 
 
-my %grid=();
+my @grid=();
 my $minx=99999999; my $miny=0;
 my $maxx=0; my $maxy=0;
+my $xshift=0;
 
 while(<STDIN>) {
     chomp;
@@ -36,15 +38,17 @@ while(<STDIN>) {
                 $maxx=$x if($x>$maxx);
                 $minx=$x if($x<$minx);
                 foreach my $i (min($y,$y1)..max($y,$y1)){
-                    $grid{getIndex($x,$i)}="#";
+                    $grid[$i]=$grid[$i] // [];
+                    $grid[$i][$x+$xshift]="#";
                     $maxy=$i if($y>$maxy);
                     $miny=$i if($y<$miny);
                 }
             } else {
                 $maxy=$y if($y>$maxy);
                 $miny=$y if($y<$miny);
+                $grid[$y]=$grid[$y] // [];
                 foreach my $i (min($x, $x1)..max($x, $x1)) {
-                    $grid{getIndex($i, $y)}="#";
+                    $grid[$y][$i+$xshift]="#";
                     $maxx=$i if($x>$maxx);
                     $minx=$i if($x<$minx);
                 }
@@ -66,12 +70,12 @@ do {
     my $sx=500; my $sy=0; my $stopped=0;
     $answer++;
     do {
-        if(defined($grid{getIndex($sx,$sy+1)}) ) {
-            if(defined($grid{getIndex($sx-1,$sy+1)})) {
-                if(defined($grid{getIndex($sx+1,$sy+1)}) )  {
+        if(defined($grid[$sy+1][$sx+$xshift]) ) {
+            if(defined($grid[$sy+1][$sx-1+$xshift]) ) {
+                if(defined($grid[$sy+1][$sx+1+$xshift]) ) {
                     #Blocked
                     $stopped=1;
-                    $grid{getIndex($sx,$sy)}='s';
+                    $grid[$sy][$sx+$xshift]='s';
                     $another=0 if($sy==0 && $sx==500);
                 } else {
                     $sx++; $sy++;
@@ -90,7 +94,7 @@ do {
         if($sy == $floor-1) {
             #fallen out
             $stopped=1;
-            $grid{getIndex($sx, $sy)}='s';
+            $grid[$sy][$sx+$xshift]='s';
         }
     } while(!$stopped);
 } while($another);
@@ -100,7 +104,7 @@ printf("Answer is %d\n", $answer);
 sub pg {
     foreach my $iy ($miny..$maxy) {
     foreach my $ix ($minx..$maxx) {
-            print $grid{getIndex($ix, $iy)} // ".";
+        print $grid[$iy][$ix+$xshift] // '.';
     }
     print "\n";
 }

@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+#perl d16b.pl  14742.18s user 10.13s system 99% cpu 4:05:55.99 total
+
 use strict;
 use Data::Dumper;
 use List::Util qw(min max);
@@ -34,12 +36,17 @@ sub checkpath {
 
 	return 0 if($ts>=$timelimit);
 
-	my $key=$hnode.$enode.$ts;
+	my $key=$ts;
+    my $i=0; my $hi=0; my $ei=0;
 	foreach my $v (sort keys %vs) {
 		if($vs{$v}>0) {
 			$key=$key.$v;
 		}
+		$hi=$i if($hi==0 && $v eq $hnode);
+		$ei=$i if($ei==0 && $v eq $enode);
+		$i++;
 	}
+	$key=min($hi,$ei).max($hi,$ei).$key;
 #	printf("memo{%s} is %s\n", $key, $memo{$key});
 	return $memo{$key} if(defined($memo{$key}));
 

@@ -8,13 +8,16 @@ use List::Util qw(min max);
 
 my %v;
 my %vs=();
-
+my @vp=();
 
 map { chomp; my ($e, $f, $g) = $_ =~ q/Valve (\w*) has flow rate=(\d*); tunnels? leads? to valves? ([A-Z, ]*)/; $v{$e}{"rate"} =$f; 
 		$v{$e}{"cons"}= [split / ?, ?/,$g]; 
 		$v{$e}{"on"}="";
-		$vs{$e}=$f;
+		$vs{$e}=$f if($f);
+		push @vp, $e;
 	} <STDIN>;
+
+@vp=sort @vp;
 
 print Dumper \%v;
 print Dumper \%vs;
@@ -36,17 +39,7 @@ sub checkpath {
 
 	return 0 if($ts>=$timelimit);
 
-	my $key=$ts;
-    my $i=0; my $hi=0; my $ei=0;
-	foreach my $v (sort keys %vs) {
-		if($vs{$v}>0) {
-			$key=$key.$v;
-		}
-		$hi=$i if($hi==0 && $v eq $hnode);
-		$ei=$i if($ei==0 && $v eq $enode);
-		$i++;
-	}
-	$key=min($hi,$ei).max($hi,$ei).$key;
+	my $key=$ts.join("",sort(keys %vs)).join("",sort($hnode, $enode));
 #	printf("memo{%s} is %s\n", $key, $memo{$key});
 	return $memo{$key} if(defined($memo{$key}));
 
@@ -54,8 +47,8 @@ sub checkpath {
 
 	my $bestpath=0;
 
-	if($vs{$hnode}) {
-		$vs{$hnode}=0;
+	if(defined($vs{$hnode})) {
+		delete $vs{$hnode};
 		my $thisflow=$v{$hnode}{"rate"}*($timelimit-($ts+1));
 		foreach my $en (@{$v{$enode}{"cons"}}) {
 #			$bestpath=max($bestpath, $thisflow+checkpath($hnode, $en, $ts+1, $path."|".$hnode."!-".$en, %vs));
@@ -63,8 +56,8 @@ sub checkpath {
 		}
 		$vs{$hnode}=$v{$hnode}{"rate"};
 	}
-	if($vs{$enode}) {
-		$vs{$enode}=0;
+	if(defined($vs{$enode})) {
+		delete $vs{$enode};
 		my $thisflow=$v{$enode}{"rate"}*($timelimit-($ts+1));
 		foreach my $hn (@{$v{$hnode}{"cons"}}) {
 #			$bestpath=max($bestpath, $thisflow+checkpath($hn, $enode, $ts+1, $path."|".$hn."-".$enode."!", %vs));
@@ -72,8 +65,8 @@ sub checkpath {
 		}
 		$vs{$enode}=$v{$enode}{"rate"};
 	}
-	if($vs{$enode} && $vs{$hnode} && !($enode eq $hnode)) {
-		$vs{$enode}=0; $vs{$hnode}=0;
+	if(defined($vs{$enode}) && defined($vs{$hnode}) && !($enode eq $hnode)) {
+		delete $vs{$enode}; delete $vs{$hnode};
 #		$bestpath=max($bestpath, ($v{$hnode}{"rate"}+$v{$enode}{"rate"})*($timelimit-($ts+1))+checkpath($hnode, $enode,$ts+1, $path."|".$hnode."!-".$enode."!",%vs));
 		$bestpath=max($bestpath, ($v{$hnode}{"rate"}+$v{$enode}{"rate"})*($timelimit-($ts+1))+checkpath($hnode, $enode,$ts+1, %vs));
 		$vs{$enode}=$v{$enode}{"rate"};

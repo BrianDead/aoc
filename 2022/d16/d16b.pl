@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 #perl d16b.pl  14742.18s user 10.13s system 99% cpu 4:05:55.99 total
+#perl d16b.pl  2544.32s user 5.37s system 99% cpu 42:30.03 total
 
 use strict;
 use Data::Dumper;

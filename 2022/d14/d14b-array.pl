@@ -38,7 +38,7 @@ while(<STDIN>) {
                 $maxx=$x if($x>$maxx);
                 $minx=$x if($x<$minx);
                 foreach my $i (min($y,$y1)..max($y,$y1)){
-                    $grid[$i]=$grid[$i] // [];
+#                    $grid[$i]=$grid[$i] // [];
                     $grid[$i][$x+$xshift]="#";
                     $maxy=$i if($y>$maxy);
                     $miny=$i if($y<$miny);
@@ -46,7 +46,7 @@ while(<STDIN>) {
             } else {
                 $maxy=$y if($y>$maxy);
                 $miny=$y if($y<$miny);
-                $grid[$y]=$grid[$y] // [];
+#               $grid[$y]=$grid[$y] // [];
                 foreach my $i (min($x, $x1)..max($x, $x1)) {
                     $grid[$y][$i+$xshift]="#";
                     $maxx=$i if($x>$maxx);

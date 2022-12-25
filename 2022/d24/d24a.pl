@@ -77,6 +77,7 @@ sub movefrom {
     my $hash="$x.$y.$step";
     if(defined($cache{$hash})) {
         print "Cached $hash\n" if($step<1093);
+        return $cache{$hash};
     }
 
     if($y==$maxy && $x==$finish) {

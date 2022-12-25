@@ -26,12 +26,35 @@ my @steps=([1,0],[0,1],[-1,0],[0,-1]);
 
 my $x=$start;
 my $y=0;
-my $answer=999999999999;    
+my $answer=999999999999;
+my $answer2; my $answer3;    
 my $currentmin=1500;
+my %cache=();
+
+
 pm($x, $y, \@map);
 
-$answer=min($answer, movefrom($x,$y,1));
+$answer=movefrom($start,0,1,$finish,$maxy);
+printf("Answer 1: %s\n", $answer);
 
+unshift @steps, pop @steps;
+unshift @steps, pop @steps;
+
+print Dumper \@steps;
+$currentmin=300+$answer;
+%cache=();
+
+$answer2=movefrom($finish, $maxy, $answer+1, $start, 0);
+printf("Answer 2: %d (%d) \n", $answer2, $answer2-$answer);
+
+unshift @steps, pop @steps;
+unshift @steps, pop @steps;
+$currentmin=300+$answer2;
+%cache=();
+
+$answer3=movefrom($start,0,$answer2+1,$finish,$maxy);
+
+printf("Answer3: %d (%d)\n", $answer3, $answer3-$answer2);
 print( "Answer is $answer\n");
 
 sub pm {
@@ -62,49 +85,51 @@ sub pm {
     print "\n";
 }
 
-my %cache=();
-
 sub movefrom {
     my $x=shift;
     my $y=shift;
     my $step=shift;
+    my $tox=shift;
+    my $toy=shift;
     my $moves=0;
 
     my $minpath=999999999999;
 
-    return $minpath if((abs($finish-$x)+abs($maxy-$y))>($currentmin-$step));
+    return $minpath if((abs($tox-$x)+abs($toy-$y))>($currentmin-$step));
 
     my $hash="$x.$y.$step";
     if(defined($cache{$hash})) {
-#        print "Cached $hash\n" if($step<1093);
+        print "Cached $hash\n" if($step<1093);
         return $cache{$hash};
     }
+    print("Running $hash\n");
 
-    if($y==$maxy && $x==$finish) {
+    if($y==$toy && $x==$tox) {
         $minpath=$step-1;
         $currentmin=min($minpath, $currentmin);
         printf("Finished - %d (currentmin=%d)\n", $minpath, $currentmin);
     } else {
 
         if(!defined($maps[$step])) {
-#            printf("Making new map for step %d\n", $step);
+            printf("Making new map for step %d\n", $step);
             $maps[$step]=moveblizzards($maps[$step-1]);
         }
 
 #        pm($x,$y,$maps[$step]);
 
         foreach my $s (@steps) {
-            if($x+$s->[0]<1 || $x+$s->[0]>$maxx-1 || ($y+$s->[1]>$maxy-1 && $x+$s->[0]!=$finish) || $y+$s->[1]<1) {
+            if(($x+$s->[0]<1 || $x+$s->[0]>$maxx-1 || $y+$s->[1]>$maxy-1 
+                || $y+$s->[1]<1) && !($y+$s->[1]==$toy && $x+$s->[0]==$tox) ) {
                 next;
             }
             if(!defined($maps[$step][$y+$s->[1]][$x+$s->[0]])) {
-                $minpath=min($minpath, movefrom($x+$s->[0], $y+$s->[1], $step+1));
+                $minpath=min($minpath, movefrom($x+$s->[0], $y+$s->[1], $step+1, $tox, $toy));
                 $moves++;
             }
         }
         # or wait in place if a blizzard hasn't moved here
         if(!defined($maps[$step][$y][$x])) {
-            $minpath=min($minpath, movefrom($x, $y, $step+1));
+            $minpath=min($minpath, movefrom($x, $y, $step+1, $tox, $toy));
             $moves++;
         }
     }

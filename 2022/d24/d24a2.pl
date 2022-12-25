@@ -20,8 +20,6 @@ foreach my $i (0..$maxx) {
     $finish=$i if ($map[$maxy][$i] eq ".");
 }
 
-my $done=0;
-my $moves=0;
 my @steps=([1,0],[0,1],[-1,0],[0,-1]);
 
 my $x=$start;
@@ -30,55 +28,41 @@ my $answer=999999999999;
 my $currentmin=1500;
 pm($x, $y, \@map);
 
-$answer=min($answer, movefrom($x,$y,1));
+my @queue=({x=>$x,y=>$y,t=>1,md=>md($x,$y)});
+
+
+while(@queue) {
+    @queue=sort { ($a->{md}*100+$a->{t})<=>($b->{md}*100+$a->{t}) }@queue;
+    
+    move(shift @queue);
+
+}
+
+
+#$answer=min($answer, movefrom($x,$y,1));
+
+$answer=$currentmin;
 
 print( "Answer is $answer\n");
 
-sub pm {
-    my $px=shift;
-    my $py=shift;
-    my $map=shift;
-
-    foreach my $y (0..$maxy) {
-        foreach my $x (0..$maxx) {
-            if($x==$px && $y==$py) {
-                print "E";
-            } elsif(($y==0 && $x==$start) || ($y==$maxy && $x==$finish)) {
-                print"!";
-            } elsif(($y==0 || $y==$maxy || $x==0 || $x==$maxx)) {
-                print "#";
-            } elsif(defined($map->[$y][$x])) {
-                if(length($map->[$y][$x])>1) {
-                    print length($map->[$y][$x]);
-                } else {
-                    print $map->[$y][$x];
-                }
-            } else {
-                print '.';
-            }
-        }
-        print "\n";
-    }
-    print "\n";
-}
-
 my %cache=();
 
-sub movefrom {
-    my $x=shift;
-    my $y=shift;
-    my $step=shift;
-    my $moves=0;
+sub move {
+    my $pos=shift;
+
+    my $x=$pos->{x};
+    my $y=$pos->{y};
+    my $step=$pos->{t};
 
     my $minpath=999999999999;
 
-    return $minpath if((abs($finish-$x)+abs($maxy-$y))>($currentmin-$step));
+    return if((abs($finish-$x)+abs($maxy-$y))>($currentmin-$step));
 
-    my $hash="$x.$y.$step";
-    if(defined($cache{$hash})) {
-#        print "Cached $hash\n" if($step<1093);
-        return $cache{$hash};
-    }
+     my $hash="$x.$y.$step";
+     if(defined($cache{$hash})) {
+         print "Cached $hash\n";
+         return;
+     }
 
     if($y==$maxy && $x==$finish) {
         $minpath=$step-1;
@@ -87,7 +71,7 @@ sub movefrom {
     } else {
 
         if(!defined($maps[$step])) {
-#            printf("Making new map for step %d\n", $step);
+            printf("Making new map for step %d\n", $step);
             $maps[$step]=moveblizzards($maps[$step-1]);
         }
 
@@ -98,17 +82,15 @@ sub movefrom {
                 next;
             }
             if(!defined($maps[$step][$y+$s->[1]][$x+$s->[0]])) {
-                $minpath=min($minpath, movefrom($x+$s->[0], $y+$s->[1], $step+1));
-                $moves++;
+                push @queue, { x=> $x+$s->[0], y=> $y+$s->[1], t=> $step+1, md=>md($x+$s->[0], $y+$s->[1]) };
             }
         }
         # or wait in place if a blizzard hasn't moved here
         if(!defined($maps[$step][$y][$x])) {
-            $minpath=min($minpath, movefrom($x, $y, $step+1));
-            $moves++;
+            push @queue, {x=>$x, y=>$y, t=>$step+1,md=>md($x,$y)};
         }
     }
-    $cache{$hash}=$minpath;
+    $cache{$hash}=1;
     return $minpath;
 }
 
@@ -147,3 +129,36 @@ sub moveblizzards {
     return \@newmap;
 }
 
+
+sub md {
+    my $x=shift; my $y=shift;
+
+    return (abs($finish-$x)+abs($maxy-$y));
+}
+sub pm {
+    my $px=shift;
+    my $py=shift;
+    my $map=shift;
+
+    foreach my $y (0..$maxy) {
+        foreach my $x (0..$maxx) {
+            if($x==$px && $y==$py) {
+                print "E";
+            } elsif(($y==0 && $x==$start) || ($y==$maxy && $x==$finish)) {
+                print"!";
+            } elsif(($y==0 || $y==$maxy || $x==0 || $x==$maxx)) {
+                print "#";
+            } elsif(defined($map->[$y][$x])) {
+                if(length($map->[$y][$x])>1) {
+                    print length($map->[$y][$x]);
+                } else {
+                    print $map->[$y][$x];
+                }
+            } else {
+                print '.';
+            }
+        }
+        print "\n";
+    }
+    print "\n";
+}

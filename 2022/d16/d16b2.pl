@@ -82,6 +82,8 @@ sub checkpath {
 
 	if(defined($vs{$enode}) && defined($vs{$hnode}) && !($enode eq $hnode)) {
 		delete $vs{$enode}; delete $vs{$hnode};
+		printf("Time %d: Brate %d - %d and %d - %d for %d sec=%d\n", $ts, $hnode, $rates[$hnode], $enode, $rates[$enode], $timelimit-($ts+1), ($rates[$hnode]+$rates[$enode])*($timelimit-($ts+1)));
+
 #		$bestpath=max($bestpath, ($v{$hnode}{"rate"}+$v{$enode}{"rate"})*($timelimit-($ts+1))+checkpath($hnode, $enode,$ts+1, $path."|".$hnode."!-".$enode."!",%vs));
 		$bestpath=max($bestpath, ($rates[$hnode]+$rates[$enode])*($timelimit-($ts+1))+checkpath($hnode, $enode,$ts+1, %vs));
 		$vs{$enode}=$rates[$enode];
@@ -90,6 +92,7 @@ sub checkpath {
 	if(defined($vs{$hnode})) {
 		delete $vs{$hnode};
 		my $thisflow=$rates[$hnode]*($timelimit-($ts+1));
+		printf("Time %d: Hrate %d - %d for %d sec=%d\n", $ts, $hnode, $rates[$hnode], $timelimit-($ts+1), $thisflow);
 		foreach my $en (@{$cons[$enode]}) {
 #			$bestpath=max($bestpath, $thisflow+checkpath($hnode, $en, $ts+1, $path."|".$hnode."!-".$en, %vs));
 			$bestpath=max($bestpath, $thisflow+checkpath($hnode, $en, $ts+1, %vs));
@@ -99,6 +102,7 @@ sub checkpath {
 	if(defined($vs{$enode})) {
 		delete $vs{$enode};
 		my $thisflow=$rates[$enode]*($timelimit-($ts+1));
+		printf("Time %d: Erate %d - %d for %d sec=%d\n", $ts, $enode, $rates[$enode], $timelimit-($ts+1), $thisflow);
 		foreach my $hn (@{$cons[$hnode]}) {
 #			$bestpath=max($bestpath, $thisflow+checkpath($hn, $enode, $ts+1, $path."|".$hn."-".$enode."!", %vs));
 			$bestpath=max($bestpath, $thisflow+checkpath($hn, $enode, $ts+1, %vs));
@@ -114,7 +118,7 @@ sub checkpath {
 	}
 	
 
-#	printf("Done checking h=%s (%d), e=%s (%d) at time %d - bestpath %d from %s\n", $hnode, $vs{$hnode}, $enode, $vs{$enode}, $ts, $bestpath, $path);
+	printf("Done checking h=%s (%d), e=%s (%d) at time %d - bestpath %d \n", $hnode, $vs{$hnode}, $enode, $vs{$enode}, $ts, $bestpath);
 #	printf("Memoize %s as %d\n", $key, $bestpath);
 	$memo{$key}=$bestpath;
 

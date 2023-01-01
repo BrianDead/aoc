@@ -30,47 +30,6 @@ static inline void set_vi(int *vs, char *valve, int s) {
     printf("Set Valve %s [%d] - %d (%d)\n", valve, ((valve[0]-'A')*26)+(valve[1]-'A'), s, vs[((valve[0]-'A')*26)+(valve[1]-'A')]);
 }
 
-int read(int *vs) {
-    int v=0;
-    char line[MAX_LINE+1];
-    char *conns[MAX_LINE+1];
-
-    while(fgets(line, MAX_LINE, stdin)) {
-        int c=1;
-        int cs=0;
-        printf("Reading line %d ", v);
-
-        if(sscanf(line, "Valve %s has flow rate=%d;", 
-            nodes[v].name, &nodes[v].rate)<2) {
-                printf("Read error\n");
-                exit(1);
-            }
-        for(int i=strlen(line); i>=0; i--) {
-            if(line[i]==',') {
-                c++;
-            }
-            if(line[i]=='s' || line[i]=='e') {
-                cs=i+2;
-                break;
-            }
-        }
-        if(!cs) {
-            printf("Scan error\n");
-            exit(2);
-        }
-
-        for(int ic=0; ic<c; ic++) {
-            nodes[v].conns[ic][0]=*(line+cs+(ic*4));
-            nodes[v].conns[ic][1]=*(line+cs+(ic*4)+1);
-            nodes[v].conns[ic][2]='\0';
-        }
-        set_vi(nn, nodes[v].name, v);
-        vs[v]=nodes[v].rate;
-        nodes[v++].nc=c;
-        printf("\n");
-    }
-    return v;
-}
 
 void printnodes(int nc) {
     for(int i=0; i<nc; i++) {
@@ -83,7 +42,7 @@ void printnodes(int nc) {
 }
 
 #define TIMELIMIT 26
-
+int max_sofar=0;
 
 static inline unsigned long int get_phash(int ts, char *hnode, char *enode) {
     unsigned long int hash=0l;
@@ -94,15 +53,41 @@ static inline unsigned long int get_phash(int ts, char *hnode, char *enode) {
 
     return ((ts*MAX_NODES+gn)*MAX_NODES+ln);
 }
-
+ 
 static inline unsigned long int get_vhash(int *svs) {
     unsigned long int hash=0l;
     
     for(int i=0; i<nc; i++) {
+        printf("svs[%d]=%d - %016lx\n", i, svs[i], hash);
         hash=hash|(unsigned long int)((svs[i]?1:0)*pow(2,(i)));
     }
 
     return hash;
+}
+
+static inline int check_vs(unsigned long int vhash, int valve) {
+    return (vhash & (unsigned long int)pow(2,valve)) != 0l;
+}
+
+int check_vso(unsigned long int vhash, int valve) {
+    unsigned long int mask=pow(2,valve);
+    int r=(vhash & mask)!=0l;
+    printf("Checking valve %d - %016lx & %016lx = %d\n", valve, vhash, mask, r);
+    return r;
+}
+
+static inline unsigned long int set_vs(unsigned long int vhash, int valve) {
+    return(vhash | (unsigned long int)pow(2, valve));
+}
+
+unsigned long int unset_vsd(unsigned long int vhash, int valve) {
+    unsigned long int mask=~(unsigned long int)pow(2,valve);
+    unsigned long int r=vhash & mask;
+    printf("Unsetting valve %d - %016lx & %016lx = %016lx\n", valve, vhash, mask, r);
+    return r;
+}
+static inline unsigned long int unset_vs(unsigned long int vhash, int valve) {
+    return(vhash & ~(unsigned long int)pow(2, valve));
 }
 
 
@@ -132,7 +117,7 @@ typedef struct centry_s {
     int score;
 } centry;
 
-#define MAX_CACHE 10000
+#define MAX_CACHE 50000
 
 static int ce_max[TIMELIMIT*MAX_NODES*MAX_NODES];
 static centry cache[TIMELIMIT*MAX_NODES*MAX_NODES][MAX_CACHE];
@@ -168,18 +153,78 @@ void cache_set(int ts,int *svs,char *hnode, char *enode, int score) {
     cache_s(get_phash(ts, hnode, enode), get_vhash(svs), score);
 }
 
-int countoff(int *svs) {
-    int r=0;
+int cmpfnc(const void * a, const void * b) {
+    return( *(int *)b - *(int *)a);
+}
+
+int countoff(unsigned long int vhash, int ts, int *rem) {
+    int r=0; int rm=0;
+    int sn[MAX_NODES];
+    *rem=0;
+
     for(int i=0; i<(nc?nc:MAX_NODES); i++) {
-        if(svs[i]) r++;
+        if(check_vs(vhash, i)) {
+            sn[r]=nodes[i].rate;
+            r++;
+        }
+    }
+    qsort((void *)sn, r, sizeof(int), cmpfnc);
+    int tr=TIMELIMIT-(ts+1);
+    for(int i=0; i<r && i<(tr*2); i++) {
+        *rem+=sn[i]*(int)(tr-(i/2));
+//        printf("%d * %d = %d\n", sn[i],tr-i, sn[i]*(tr-i) );
     }
     return r;
 }
 
-int checkpath(char *hnode, char *enode, int ts, int *svs) {
+
+unsigned long int read() {
+    int v=0;
     int vs[MAX_NODES];
+    char line[MAX_LINE+1];
+    char *conns[MAX_LINE+1];
+
+    while(fgets(line, MAX_LINE, stdin)) {
+        int c=1;
+        int cs=0;
+        printf("Reading line %d ", v);
+
+        if(sscanf(line, "Valve %s has flow rate=%d;", 
+            nodes[v].name, &nodes[v].rate)<2) {
+                printf("Read error\n");
+                exit(1);
+            }
+        for(int i=strlen(line); i>=0; i--) {
+            if(line[i]==',') {
+                c++;
+            }
+            if(line[i]=='s' || line[i]=='e') {
+                cs=i+2;
+                break;
+            }
+        }
+        if(!cs) {
+            printf("Scan error\n");
+            exit(2);
+        }
+
+        for(int ic=0; ic<c; ic++) {
+            nodes[v].conns[ic][0]=*(line+cs+(ic*4));
+            nodes[v].conns[ic][1]=*(line+cs+(ic*4)+1);
+            nodes[v].conns[ic][2]='\0';
+        }
+        set_vi(nn, nodes[v].name, v);
+        vs[v]=nodes[v].rate;
+        nodes[v++].nc=c;
+        nc++;
+        printf("\n");
+    }
+    return get_vhash(vs);
+}
+
+
+int checkpath(char *hnode, char *enode, int ts, unsigned long int vhash, int pathscore) {
     int bestpath=0;
-    int cv=0;
 
     if(ts>=TIMELIMIT) {
         return 0;
@@ -187,97 +232,86 @@ int checkpath(char *hnode, char *enode, int ts, int *svs) {
 
     int hn=get_vi(nn, hnode);
     int en=get_vi(nn, enode);
+//    unsigned long int vhash=get_vhash(svs);
+
     unsigned long int phash=get_phash(ts, hnode, enode);
-    unsigned long int vhash=get_vhash(svs);
+    int rr=0;
 
-    printf("%016lx-%016lx Time %d: Human %s Elephant %s Off:%d\n",phash,vhash,ts,hnode,enode, countoff(svs));
-
-    bestpath=cache_g(phash, vhash);
-    printf("%016lx-%016lx Seen before %d\n", phash, vhash, bestpath);
-    if(bestpath>=0) return bestpath;
-    bestpath=0;
-
-    for(int i=0; i<nc; i++) {
-        vs[i]=svs[i];
-        if(vs[i]) cv++;
-    }
-
-    if (cv==0) {
+    if (vhash==0l) {
         return 0;
     }
 
-    if(vs[en] && vs[hn] && !(en==hn)) {
-        vs[en]=0; vs[hn]=0;
-        int thisflow=(nodes[en].rate+nodes[hn].rate)*(TIMELIMIT-(ts+1));
-//        printf("BRate %d for %d  and %d for %d at ts=%d (%d) yields %d\n", nodes[hn].rate, hn, nodes[en].rate, en, ts, TIMELIMIT-(ts+1), thisflow);
-        if(cv>2) {
-            int tp=thisflow+checkpath(hnode, enode, ts+1, vs);
-            bestpath=tp;
-        } else {
-            bestpath=thisflow;
-        }
-        vs[en]=nodes[en].rate; vs[hn]=nodes[hn].rate;
+    bestpath=cache_g(phash, vhash);
+    if (ts<8) {
+        printf("%016lx-%016lx Seen before %d\n", phash, vhash, bestpath);
     }
 
-    if(vs[hn]) {
-        vs[hn]=0;
-        int thisflow=nodes[hn].rate*(TIMELIMIT-(ts+1));
-//        printf("HRate %d for %d at ts=%d (%d) yields %d\n",  nodes[hn].rate, hn, ts, TIMELIMIT-(ts+1), thisflow);
-        if(cv>1) {
+    if(bestpath>=0) return bestpath;
+    bestpath=0;
+
+    int vc=countoff(vhash, ts, &rr);
+
+/*    if (ts<8) {
+        printf("%016lx-%016lx Time %d: Human %s Elephant %s Off:%d\n",phash,vhash,ts,hnode,enode, vc);
+    }
+*/
+    if(rr+pathscore < max_sofar) {
+        printf("%016lx-%016lx Time %d: Early out %d+%d  vs %d\n", phash,vhash,ts,rr,pathscore,max_sofar);
+    } else {
+
+        if(check_vs(vhash,en) && check_vs(vhash, hn) && !(en==hn)) {
+            int thisflow=(nodes[en].rate+nodes[hn].rate)*(TIMELIMIT-(ts+1));
+            int tp=thisflow+checkpath(hnode, enode, ts+1, unset_vs(unset_vs(vhash,en),hn), pathscore+thisflow);
+            bestpath=tp;
+        }
+
+        if(check_vs(vhash, hn)) {
+            int thisflow=nodes[hn].rate*(TIMELIMIT-(ts+1));
+    //        printf("HRate %d for %d at ts=%d (%d) yields %d\n",  nodes[hn].rate, hn, ts, TIMELIMIT-(ts+1), thisflow);
             for(int iv=0; iv<nodes[en].nc; iv++) {
                 int tp;
-                tp=thisflow+checkpath(hnode, nodes[en].conns[iv], ts+1, vs);
+                tp=thisflow+checkpath(hnode, nodes[en].conns[iv], ts+1, unset_vs(vhash,hn), pathscore+thisflow);
                 if(tp>bestpath) {
-                    bestpath=tp;
+                    bestpath=tp;  
                 }
-            }
-        } else {
-            if(thisflow>bestpath) {
-                bestpath=thisflow;
             }
         }
 
-        vs[hn]=nodes[hn].rate;
-    }
-
-    if(vs[en]) {
-        vs[en]=0; 
-        int thisflow=nodes[en].rate*(TIMELIMIT-(ts+1));
-//        printf("ERate %d for %d at ts=%d (%d) yields %d\n",  nodes[en].rate, en, ts, TIMELIMIT-(ts+1), thisflow);
-        if(cv>1) {
+        if(check_vs(vhash,en)) {
+            int thisflow=nodes[en].rate*(TIMELIMIT-(ts+1));
+    //        printf("ERate %d for %d at ts=%d (%d) yields %d\n",  nodes[en].rate, en, ts, TIMELIMIT-(ts+1), thisflow);
             for(int iv=0; iv<nodes[hn].nc; iv++) {
                 int tp;
-                tp=thisflow+checkpath(nodes[hn].conns[iv], enode, ts+1, vs);
+                tp=thisflow+checkpath(nodes[hn].conns[iv], enode, ts+1, unset_vs(vhash,en),pathscore+thisflow);
                 if(tp>bestpath) {
                     bestpath=tp;
                 }
             }
-        } else {
-            if(thisflow>bestpath) {
-                bestpath=thisflow;
-            }
         }
-        vs[en]=nodes[en].rate;
-    }
 
-    for(int ihv=0; ihv<nodes[hn].nc;ihv++) {
-        for(int iev=0; iev<nodes[en].nc; iev++) {
-            int tp=checkpath(nodes[hn].conns[ihv],nodes[en].conns[iev],ts+1,vs);
-            if(tp>bestpath) {
-                bestpath=tp;
+        for(int ihv=0; ihv<nodes[hn].nc;ihv++) {
+            for(int iev=0; iev<nodes[en].nc; iev++) {
+                int tp=checkpath(nodes[hn].conns[ihv],nodes[en].conns[iev],ts+1,vhash,pathscore);
+                if(tp>bestpath) {
+                    bestpath=tp;
+                }
             }
         }
+
+        if(ts<8) {
+            printf("%016lx-%016lx Time %d: Best %d - %d (%d to go) yields %d\n", phash, vhash, ts, hn, en, TIMELIMIT-(ts+1), bestpath);
+        }
     }
-    printf("%16lx-%16lx Time %d: Best %d - %d (%d to go) yields %d\n", phash, vhash, ts, hn, en, TIMELIMIT-(ts+1), bestpath);
     cache_s(phash, vhash, bestpath);
+    max_sofar=bestpath>max_sofar?bestpath:max_sofar;
     return bestpath;
 
 }
 
 int main(int argc, char * argv) {
+    unsigned long int vhash;
     int vs[MAX_NODES];
 
-    printf("long=%ld double=%ld\n", sizeof(long), sizeof(double));
 
     for(int i=0; i<TIMELIMIT; i++) {
         ce_max[i]=0;
@@ -287,7 +321,7 @@ int main(int argc, char * argv) {
         vs[i]=0;
     }
 
-    nc=read(vs);
+    vhash=read();
     printf("nc=%d\n", nc);
     printnodes(nc);
     for(int i=0; i<MAX_NODES; i++) {
@@ -296,5 +330,5 @@ int main(int argc, char * argv) {
         }
     }
 
-    printf("Answer is %d\n", checkpath("AA", "AA", 0, vs));
+    printf("Answer is %d\n", checkpath("AA", "AA", 0, vhash,0));
 }

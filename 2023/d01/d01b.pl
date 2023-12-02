@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# results: a1=54304 a2=54418
+
 my $answer1=0;
 my $answer2=0;
 

@@ -10,3 +10,4 @@ a.*
 .DS_Store
 *.big
 scr*
+*.txt

@@ -3,9 +3,21 @@
 #include <string.h>
 #include <math.h>
 
+// Compiled with gcc -O3 -lm: ( cat in.d16r | ./a.out; )  610.67s user 5.69s system 99% cpu 10:17.04 total
+// Compiled with gcc -lm : ( cat in.d16r | ./a.out; )  986.17s user 6.40s system 99% cpu 16:34.20 total
+
+
 #define MAX_LINE    128
 #define MAX_NODES   64
 #define MAX_CONNS   6
+#define TIMELIMIT 26
+#define MAX_CACHE 5000
+
+
+typedef struct centry_s {
+    unsigned long int hash;
+    int score;
+} centry;
 
 typedef struct node_s {
     char name[2+1];
@@ -18,6 +30,11 @@ static node nodes[MAX_NODES];
 static int nn[26*26];
 static int nc=0;
 
+static int ce_max[TIMELIMIT*MAX_NODES*MAX_NODES];
+static centry *cache;
+
+int max_sofar=0;
+
 
 static inline int get_vi(int *vs, char *valve) {
     int r=vs[((valve[0]-'A')*26)+(valve[1]-'A')];
@@ -28,7 +45,6 @@ static inline void set_vi(int *vs, char *valve, int s) {
     vs[((valve[0]-'A')*26)+(valve[1]-'A')]=s;
 }
 
-
 void printnodes(int nc) {
     for(int i=0; i<nc; i++) {
         printf("Node %s flow %d - %d conns to ", nodes[i].name, nodes[i].rate, nodes[i].nc);
@@ -38,9 +54,6 @@ void printnodes(int nc) {
         printf("\n");
     }
 }
-
-#define TIMELIMIT 26
-int max_sofar=0;
 
 static inline unsigned long int get_phash(int ts, char *hnode, char *enode) {
     unsigned long int hash=0l;
@@ -74,22 +87,12 @@ static inline unsigned long int unset_vs(unsigned long int vhash, int valve) {
     return(vhash & ~(unsigned long int)pow(2, valve));
 }
 
-typedef struct centry_s {
-    unsigned long int hash;
-    int score;
-} centry;
-
-#define MAX_CACHE 50000
-
-static int ce_max[TIMELIMIT*MAX_NODES*MAX_NODES];
-static centry cache[TIMELIMIT*MAX_NODES*MAX_NODES][MAX_CACHE];
-
 static inline int cache_g(unsigned long int phash, unsigned long int vhash) {
     int ret=-1;
 
     for(int i=0; i<ce_max[phash]; i++) {
-        if(cache[phash][i].hash==vhash) {
-            ret=cache[phash][i].score;
+        if(cache[phash*i].hash==vhash) {
+            ret=cache[phash*i].score;
             break;
         }
     }
@@ -101,13 +104,19 @@ int cache_get(int ts,int *svs, char *hnode, char *enode) {
     return cache_g(get_phash(ts, hnode, enode),get_vhash(svs));
 }
 
+static int max_cache=0;
+
 static inline void cache_s(unsigned long int phash, unsigned long int vhash, int score) {
     if(ce_max[phash]<MAX_CACHE-1) {
-        cache[phash][ce_max[phash]].hash=vhash;
-        cache[phash][ce_max[phash]].score=score;
+//        cache[phash][ce_max[phash]].hash=vhash;
+//        cache[phash][ce_max[phash]].score=score;
+        cache[phash*ce_max[phash]].hash=vhash;
+        cache[phash*ce_max[phash]].score=score;
         ce_max[phash]++;
+		max_cache=(ce_max[phash]>max_cache)?ce_max[phash]:max_cache;
     } else {
-        printf("No cache room");
+        printf("No cache room\n");
+        exit(1);
     }
 }
 
@@ -137,7 +146,6 @@ int countoff(unsigned long int vhash, int ts, int *rem) {
     }
     return r;
 }
-
 
 unsigned long int read() {
     int v=0;
@@ -177,17 +185,24 @@ unsigned long int read() {
         vs[v]=nodes[v].rate;
         nodes[v++].nc=c;
         nc++;
-        printf("\n");
     }
     return get_vhash(vs);
 }
 
+static int depth=0;
 
 int checkpath(char *hnode, char *enode, int ts, unsigned long int vhash, int pathscore) {
     int bestpath=0;
+    depth++;
 
+#ifdef PROGRESS_PRINT
+    printf("depth: %d, hnode: %s, enode: %s, ts: %d - ", depth, hnode, enode, ts);
+#endif
     if(ts>=TIMELIMIT) {
-        return 0;
+#ifdef PROGRESS_PRINT
+        printf("timelimit exceeded\n");
+#endif
+        goto bail;
     }
 
     int hn=get_vi(nn, hnode);
@@ -197,12 +212,18 @@ int checkpath(char *hnode, char *enode, int ts, unsigned long int vhash, int pat
     int rr=0;
 
     if (vhash==0l) {
-        return 0;
+#ifdef PROGRESS_PRINT
+        printf("vhash==0l\n");
+#endif
+        goto bail;
     }
 
     bestpath=cache_g(phash, vhash);
     if(bestpath>=0) return bestpath;
     bestpath=0;
+#ifdef PROGRESS_PRINT
+    printf("not cached\n");
+#endif
 
     int vc=countoff(vhash, ts, &rr);
 
@@ -244,8 +265,17 @@ int checkpath(char *hnode, char *enode, int ts, unsigned long int vhash, int pat
             }
         }
     }
+#ifdef PROGRESS_PRINT
+    printf("depth %d - cacheing result %lu, %lu, %d\n", depth, phash, vhash, bestpath);
+#endif
     cache_s(phash, vhash, bestpath);
     max_sofar=bestpath>max_sofar?bestpath:max_sofar;
+#ifdef PROGRESS_PRINT
+    printf(" - leaving\n");
+#endif
+
+bail:
+    depth--;
     return bestpath;
 
 }
@@ -254,17 +284,28 @@ int main(int argc, char * argv) {
     unsigned long int vhash;
     int vs[MAX_NODES];
 
+    cache=(centry *)calloc(MAX_CACHE, TIMELIMIT*MAX_NODES*MAX_NODES*sizeof(centry));
+    if(! cache) { 
+        printf("Couldn't allocate memeory for cache\n");
+            exit(1);
+    }
 
+    printf("zeroing ce_max\n");
     for(int i=0; i<TIMELIMIT; i++) {
         ce_max[i]=0;
     }
 
+    printf("zeroing vs\n");
     for(int i=0; i<MAX_NODES; i++) {
         vs[i]=0;
     }
 
+    printf("reading input\n");
     vhash=read();
 //    printnodes(nc);
 
+    printf("Calculating...\n");
     printf("Answer is %d\n", checkpath("AA", "AA", 0, vhash,0));
+	printf("Largest cache: %d\n", max_cache);
+	free(cache);
 }

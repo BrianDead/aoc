@@ -1,8 +1,11 @@
 #!/usr/bin/perl
 
+# Part one answer=525119  test=4361
+# Part two answer=76504829  test=467835
+
 my $answer=0;
 
-my @in=map { chomp; my @a=split //; \@a } <>;
+my @in=map { chomp; [split //] } <>;
 
 my %cogs={};
 my $cogn={};
@@ -16,7 +19,7 @@ for $i (0..$h) {
 	my $num=0;
 	my $adj=0;
 	for $j (0..$w) {
-		if(@{$in[$i]}[$j] =~ /\d/) {
+		if($in[$i][$j] =~ /\d/) {
 			$num=$num*10+$in[$i][$j];
 			for $ii (-1..1) {
 				for $jj (-1..1) {
@@ -28,7 +31,8 @@ for $i (0..$h) {
 					}
 				}
 			}
-		} elsif ($num>0) {
+		} 
+		if($num && ($j==$w || $in[$i][$j+1] =~ /[^\d]/ )) {
 			$answer+=$num if($adj);
 			printf("Finished number %d - adj=%d - answer=%d\n", $num, $adj, $answer );
 			if($cogi>0) {
@@ -45,23 +49,6 @@ for $i (0..$h) {
 			$cogi=0;
 			$cogj=0;
 		}
-	}
-	if ($num>0) {
-		$answer+=$num if($adj);
-		printf("Finished number %d - adj=%d - answer=%d\n", $num, $adj, $answer );
-		if($cogi>0) {
-			printf("Adjacent to cog at %s, %s\n", $cogi, $cogj);
-			$cogn{"$cogi,$cogj"}++;
-			if($cogn{"$cogi,$cogj"}==1) {
-				$cogs{"$cogi,$cogj"}=$num;
-			} else {
-				$cogs{"$cogi,$cogj"}*=$num;
-			}
-		}
-		$num=0;
-		$adj=0;
-		$cogi=0;
-		$cogj=0;
 	}
 }
 

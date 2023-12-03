@@ -10,8 +10,10 @@ my @in=map { chomp; [split //] } <>;
 my %cogs={};
 my $cogn={};
 
-$h=@in;
-$w=@{$in[0]};
+my $h=@in;
+my $w=@{$in[0]};
+
+my @la=([-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]);
 
 printf("h=%d w=%d\n", $h, $w);
 
@@ -21,18 +23,16 @@ for $i (0..$h) {
 	for $j (0..$w) {
 		if($in[$i][$j] =~ /\d/) {
 			$num=$num*10+$in[$i][$j];
-			for $ii (-1..1) {
-				for $jj (-1..1) {
-					if($in[$i+$ii][$j+$jj] =~ /[^.\d]/) {
-						$adj=1;
-					}
-					if($in[$i+$ii][$j+$jj] eq "*") {
-						$cogi=$i+$ii; $cogj=$j+$jj;
-					}
+			foreach $m (@la) {
+				if($in[$i+@{$m}[0]][$j+@{$m}[1]] =~ /[^.\d]/) {
+					$adj=1;
+				}
+				if($in[$i+@{$m}[0]][$j+@{$m}[1]] eq "*") {
+					$cogi=$i+@{$m}[0]; $cogj=$j+@{$m}[1];
 				}
 			}
 		} 
-		if($num && ($j==$w || $in[$i][$j+1] =~ /[^\d]/ )) {
+		if($num && ($j==$w || $in[$i+@{$m}[0]][$j+@{$m}[1]] =~ /[^\d]/ )) {
 			$answer+=$num if($adj);
 			printf("Finished number %d - adj=%d - answer=%d\n", $num, $adj, $answer );
 			if($cogi>0) {

@@ -2,7 +2,6 @@
 
 use Data::Dumper;
 
-my @stagenames=[ 'seed' ];
 my @maps;
 my @seeds;
 my $map;
@@ -10,9 +9,6 @@ my $map;
 my $answer=9999999999;
 
 my $header="";
-
-my $from;
-my $to;
 
 sub max {
 	return (($_[0])>($_[1])?$_[0]:$_[1]);
@@ -34,14 +30,12 @@ while(<>) {
 					push (@seeds, \%t1)
 				} 
 		} else {
-			($from, $to) = $rest =~ /([a-z]+)-to-([a-z]+) map/;
 			$i=0;
 		}
 	} else {
 
 		if($i==0) {
 			$map=[ ];
-			push(@stagenames, $to);
 			push(@maps,$map);
 			$i++;
 		}
@@ -52,10 +46,6 @@ while(<>) {
 }
 
 # Now calculate
-
-print Dumper @seeds;
-
-printf("Max %d\n", max(5,4));
 
 my @sr=@seeds;
 

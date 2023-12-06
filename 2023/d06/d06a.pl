@@ -10,20 +10,6 @@ sub solve {
 }
 
 my @in=map { chomp; [ split / +/, ($_ =~ /.*: +([ 0-9]+)/)[0] ] }<>;
-print Dumper @in;
-
-#shift @{$in[0]};
-#shift @{$in[1]};
-
-my $t2="";
-my $d2="";
-
-foreach my $n (@{$in[0]}) {
-	$t2="$t2$n";
-}
-foreach my $n (@{$in[1]}) {
-	$d2="$d2$n";
-}
 
 my $answer=1;
 
@@ -35,4 +21,6 @@ for my $i (0..@{$in[0]}-1) {
 
 printf("Answer 1 = %d\n",$answer);
 
+my $t2=join('',@{$in[0]});
+my $d2=join('',@{$in[1]});
 printf("Time %d, distance %d, x=%d, answer 2 = %d\n", $t2, $d2, $x, solve($t2, $d2));

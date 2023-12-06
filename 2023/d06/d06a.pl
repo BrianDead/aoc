@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
 use POSIX;
-use Data::Dumper;
 
 sub solve {
 	my ($t, $d)=@_;

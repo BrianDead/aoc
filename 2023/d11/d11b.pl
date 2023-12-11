@@ -6,11 +6,14 @@ use Data::Dumper;
 
 my @map;
 my @galaxy;
-my %pairs;
 my $answer=0;
 my @ri;
 my @ci;
 
+
+# For part 1
+#my $insert=1;
+# For part 2
 my $insert=999999;
 
 sub getpath {

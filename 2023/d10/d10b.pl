@@ -69,32 +69,6 @@ sub mark {
 
 my %memo;
 
-sub walkfrom {
-	my @pos=@_;
-	return if($memo{"$pos[0],$pos[1]"});
-	$memo{"$pos[0],$pos[1]"}=1;
-
-	print("Walk from $pos[0],$pos[1]\n");
-
-	$record[$pos[0]][$pos[1]]='2' if ($record[$pos[0]][$pos[1]] eq '0');
-
-	foreach my $m (@la) {
-		next if( $pos[0]+$m->[0]<0 || $pos[1]+$m->[1]<0 || $pos[0]+$m->[0] ge $h || $pos[1]+$m->[1] ge $w  );
-		next if($record[$pos[0]+$m->[0]][$pos[1]+$m->[1]] eq '2');
-		if($record[$pos[0]+$m->[0]][$pos[1]+$m->[1]] eq '0') {
-			walkfrom($pos[0]+$m->[0],$pos[1]+$m->[1]);
-		} else {
-			my $pipe=$plan[$pos[0]+$m->[0]][$pos[1]+$m->[1]];
-			# it's a live pipe
-			if( ( $m->[0] eq $bend{$pipe}[0][0] && $m->[1] eq $bend{$pipe}[0][1]) ||
-				($m->[0] eq $bend{$pipe}[1][0] && $m->[1] eq $bend{$pipe}[1][1])) {
-				walkfrom($pos[0]+$m->[0],$pos[1]+$m->[1]);
-			}
-
-		}
-	}
-}
-
 sub inorout {
 	my @pos=@_;
 #	print("Checking $pos[0],$pos[1]:\n");
@@ -126,7 +100,6 @@ sub inorout {
 	}
 	$inters%2
 }
-
 
 print("S is at row $y col $x\n");
 
@@ -160,7 +133,6 @@ foreach my $bnd (keys %bend) {
 	}
 }
 
-
 mark($moves[0]); mark($moves[1]);
 
 print "Moves:\n";
@@ -169,9 +141,6 @@ print "\n";
 
 
 my @lp=(\@pos, \@pos);
-print "LP:\n";
-print Dumper \@lp;
-print "\n";
 
 $answer++;
 
@@ -192,13 +161,6 @@ do {
 	} until($done);
 
 print("Answer is $answer\n");
-
-foreach(@record) {
-	foreach my $cell (@{$_}) {
-		print $cell;
-	}
-	print "\n";
-}
 
 my $a2=0;
 

@@ -11,7 +11,7 @@ my $h=scalar @m;
 my $n=$w*$h;
 
 my @distances;
-my @visit;
+#my @visit;
 
 my %active;
 
@@ -70,7 +70,7 @@ print("w=$w h=$h n=$n nt=$nt\n");
 
 foreach my $i(0..($n*$nt)) {
 	$distances[$i]=$huge;
-	$visit[$i]=0;
+#	$visit[$i]=0;
 }
 
 sub ser {
@@ -87,25 +87,6 @@ sub minpath {
 	return reduce { $distances[$a]<$distances[$b]?$a:$b } keys %active;
 }
 
-sub minpath3 {
-	return -1 if(scalar keys %active == 0);
-	my @k=sort { $distances[$a]<=>$distances[$b] } keys %active;
-	return $k[0]; 
-}
-
-sub minpath2 {
-	my $imin=-1;
-	my $dmin=$huge+1;
-
-	foreach my $i (keys %active) {
-		if($distances[$i]<$dmin) {
-			$imin=$i;
-			$dmin=$distances[$i];
-		}
-	}
-	return $imin;
-}
-
 sub cost {
 	return $m[$_[0]][$_[1]];
 }
@@ -114,10 +95,10 @@ sub activate {
 	$active{$_[0]}=1;
 }
 
-$distances[0]=0;
-activate(0);
-$distances[20]=0;
-activate(20);
+$distances[ser(1,0,0)]=$m[1][0];
+$distances[ser(0,1,20)]=$m[0][1];
+activate(ser(1,0,0));
+activate(ser(0,1,20));
 
 foreach my $i (0..($n-1)*$nt) {
 	my $node=minpath();
@@ -127,7 +108,7 @@ foreach my $i (0..($n-1)*$nt) {
 
 	print "Next $i: node $node - $ny, $nx, $t - distance=$distances[$node]\n";
 
-	$visit[$node]=1;
+#	$visit[$node]=1;
 	delete($active{$node});
 
 	# Move up?
@@ -137,6 +118,8 @@ foreach my $i (0..($n-1)*$nt) {
 		my $newt;
 		if($t>=10 && $t<19) { $newt=$t+1; }
 		else {$newt=10; }
+		print(" $newt");
+		printf(" %d %d %d\n", ser($ny-1, $nx, $newt), $distances[ser($ny-1, $nx, $newt)], $newd);
 		if($newd<$distances[ser($ny-1, $nx, $newt)]) {
 			$distances[ser($ny-1, $nx, $newt)]=$newd;
 			activate(ser($ny-1, $nx, $newt));
@@ -149,6 +132,8 @@ foreach my $i (0..($n-1)*$nt) {
 		my $newt;
 		if($t>=30 && $t<39) { $newt=$t+1; }
 		else {$newt=30;}
+		print(" $newt");
+		printf(" %d %d %d\n", ser($ny, $nx-1, $newt), $distances[ser($ny, $nx-1, $newt)], $newd);
 		if($newd<$distances[ser($ny, $nx-1, $newt)]) {
 			$distances[ser($ny, $nx-1, $newt)]=$newd;
 			activate(ser($ny, $nx-1, $newt));
@@ -175,6 +160,8 @@ foreach my $i (0..($n-1)*$nt) {
 		my $newt;
 		if($t>=20 && $t<29) { $newt=$t+1; }
 		else {$newt=20; }
+		print(" $newt");
+		printf(" %d %d %d\n", ser($ny, $nx+1, $newt), $distances[ser($ny, $nx+1, $newt)], $newd);
 		if($newd<$distances[ser($ny, $nx+1, $newt)]) {
 			$distances[ser($ny, $nx+1, $newt)]=$newd;
 			activate(ser($ny, $nx+1, $newt));
@@ -185,6 +172,19 @@ foreach my $i (0..($n-1)*$nt) {
 
 my $answer=$huge;
 
+printf("Distances elements %d\n", scalar @distances);
+
+foreach my $i(ser($h-2, $w-2, 0)..ser($h-2, $w-1, $nt-1)) {
+	my($y, $x, $t)=node($i);
+	print("Distance $i is $distances[$i]\n");
+}
+
+foreach my $i(ser($h-1, $w-2, 0)..ser($h-1, $w-2, $nt-1)) {
+	my($y, $x, $t)=node($i);
+	print("Distance $i is $distances[$i]\n");
+}
+
+
 foreach my $i(ser($h-1, $w-1, 0)..ser($h-1, $w-1, $nt-1)) {
 	my($y, $x, $t)=node($i);
 	print("Distance $i is $distances[$i]\n");
@@ -193,3 +193,6 @@ foreach my $i(ser($h-1, $w-1, 0)..ser($h-1, $w-1, $nt-1)) {
 }
 
 print("Answer is $answer\n");
+
+my $i=scalar @distances - 1;
+print("Distance $i is $distances[$i]\n");

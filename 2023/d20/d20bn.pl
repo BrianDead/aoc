@@ -9,9 +9,13 @@ use List::Util qw(reduce);
 my %nodes;
 my @pulses;
 my @stack;
+my $done=0;
+my $pushes=0;
+my %last;
 
 sub makepulse {
-	push(@stack, \@_);
+	my @pulse=@_;
+	push(@stack, \@pulse);
 }
 
 sub pulse {
@@ -19,10 +23,28 @@ sub pulse {
 	my $pulse=shift;
 	my $from=shift;
 
-	print("Node $node, Pulse $pulse, From $from\n");
+#	if($node =~ q/(xn)|(fz)|(xf)|(hn)|(mp)/ ){
+	if($node eq 'xn' || $node eq 'mp' || $node eq 'jl') {
+		print("$node received pulse $pulse from $from, push $pushes\n");
+		if($pulse==1) {
+			if(exists $last{$from}) {
+				printf("Last was %d, cycle %d\n", $last{$from}, $pushes-$last{$from});
+			}
+			$last{$from}=$pushes;
+			foreach(keys %{$nodes{$node}}) {
+				if(my $n= $_ =~q/^in-([a-z*])/) {
+					printf("$_ -> %d\n", $nodes{$node}->{$_} )
+				}
+			}
+		}
+	}
+
 	$pulses[$pulse]++;
 
-	if($node eq "output") {
+	if($node eq "rx") {
+		if($pulse==0) {
+			$done=1;
+		}
 		return;
 	}
 
@@ -32,34 +54,40 @@ sub pulse {
 		}
 	}
 
+
 	if(exists $nodes{$node}->{type}) {
 		if($nodes{$node}->{type} eq '%') {
-			printf("Node %s is at state %d\n", $node, $nodes{$node}->{state});
 			if($pulse==0) {
 				if($nodes{$node}->{state}==0) {
 					$nodes{$node}->{state}=1;
 				} else {
 					$nodes{$node}->{state}=0;
 				}
-				foreach(@{$nodes{$node}->{links}}) {
-					makepulse($_, $nodes{$node}->{state}, $node);
+				foreach my $i (0..(scalar @{$nodes{$node}->{links}}-1)) {
+					makepulse($nodes{$node}->{links}->[$i], $nodes{$node}->{state}, $node);
 				}
+
+
+				# foreach(@{$nodes{$node}->{links}}) {
+				# 	makepulse($_, $nodes{$node}->{state}, $node);
+				# }
 			}
 		} elsif($nodes{$node}->{type} eq '&') {
 			$nodes{$node}->{"in-$from"}=$pulse;
 			my $h=0;
 			foreach(keys %{$nodes{$node}}) {
-				print"key $_\n";
 				if(my $n= $_ =~q/^in-([a-z*])/) {
-					printf("remembering %d for $_\n",$nodes{$node}->{$_});
 					if($nodes{$node}->{$_} == 0) {
 						$h=1;
 					}
 				}
 			}
-			foreach(@{$nodes{$node}->{links}}) {
-				makepulse($_, $h, $node);
+			foreach my $i (0..(scalar @{$nodes{$node}->{links}}-1)) {
+				makepulse($nodes{$node}->{links}->[$i], $h, $node);
 			}
+			# foreach(@{$nodes{$node}->{links}}) {
+			# 	makepulse($_, $h, $node);
+			# }
 		}
 	}
 }
@@ -81,11 +109,13 @@ foreach(keys %nodes) {
 print Dumper \%nodes;
 
 
-foreach (1..1000) {
+do {
+	$pushes++;
 	makepulse("broadcaster",0, "button");
 	do {
 		pulse(@{shift(@stack)});
 	} until (@stack == 0);
-}
+	print("$pushes pushes\n") if($pushes % 1000000 == 0);
+} while (!$done && $pushes<30000);
 
-printf("Low: %d, High: %d. Answer is %d\n", $pulses[0], $pulses[1], $pulses[0]*$pulses[1]);
+printf("Low: %d, High: %d. Answer is %d\n", $pulses[0], $pulses[1], $pushes);

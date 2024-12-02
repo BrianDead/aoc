@@ -23,7 +23,7 @@ sub pulse {
 	my $from=shift;
 
 #	if($node =~ q/(xn)|(fz)|(xf)|(hn)|(mp)/ ){
-	if($node eq 'xn') {
+	if($node eq 'xn' || $node eq 'mp' || $node eq 'jl') {
 		print("$node received pulse $pulse from $from, push $pushes\n");
 		if($pulse==1) {
 			if(exists $last{$from}) {
@@ -31,7 +31,7 @@ sub pulse {
 			}
 			$last{$from}=$pushes;
 			foreach(keys %{$nodes{$node}}) {
-				if(my $n= $_ =~q/^in-([a-z*])/) {
+				if($_ =~q/^in-([a-z*])/) {
 					printf("$_ -> %d\n", $nodes{$node}->{$_} )
 				}
 			}
@@ -70,7 +70,7 @@ sub pulse {
 			$nodes{$node}->{"in-$from"}=$pulse;
 			my $h=0;
 			foreach(keys %{$nodes{$node}}) {
-				if(my $n= $_ =~q/^in-([a-z*])/) {
+				if($_ =~q/^in-([a-z*])/) {
 					if($nodes{$node}->{$_} == 0) {
 						$h=1;
 					}
@@ -107,6 +107,6 @@ do {
 		pulse(@{shift(@stack)});
 	} until (@stack == 0);
 	print("$pushes pushes\n") if($pushes % 1000000 == 0);
-} while (!$done);
+} while (!$done && $pushes<30000);
 
 printf("Low: %d, High: %d. Answer is %d\n", $pulses[0], $pulses[1], $pushes);

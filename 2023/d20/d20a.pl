@@ -9,6 +9,7 @@ use List::Util qw(reduce);
 my %nodes;
 my @pulses;
 my @stack;
+my $push=0;
 
 sub makepulse {
 	push(@stack, \@_);
@@ -19,7 +20,7 @@ sub pulse {
 	my $pulse=shift;
 	my $from=shift;
 
-	print("Node $node, Pulse $pulse, From $from\n");
+	print("Push $push, Node $node, Pulse $pulse from $from\n");
 	$pulses[$pulse]++;
 
 	if($node eq "output") {
@@ -82,6 +83,7 @@ print Dumper \%nodes;
 
 
 foreach (1..1000) {
+	$push++;
 	makepulse("broadcaster",0, "button");
 	do {
 		pulse(@{shift(@stack)});

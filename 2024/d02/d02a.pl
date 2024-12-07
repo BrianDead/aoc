@@ -3,7 +3,6 @@
 use strict;
 use warnings;
 use Data::Dumper;
-use List::Util qw(reduce);
 
 my @m=map{ chomp; [split / /] } <>;
 

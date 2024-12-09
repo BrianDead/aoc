@@ -15,8 +15,8 @@ my @badbooks;
 while(<STDIN>) {
 	chomp;
 	if($_ eq "") {
-		print Dumper \%arules;
-		print Dumper \%brules;
+#		print Dumper \%arules;
+#		print Dumper \%brules;
 		$phase=1 if($_ eq "");
 		next;
 	}
@@ -98,26 +98,26 @@ my $answer2=0;
 for my $book (@badbooks) {
 	my @sortedbook=sort {
 		my $cmp=0;
-		print("Considering $a and $b: ");
+#		print("Considering $a and $b: ");
 		if(defined($arules{$a})) {
-			# if b must be after a, positive return
+			# if b must be after a, negative return
 			if( grep($_ == $b, @{$arules{$a}}) ) {
-				print("$b must be after $a ");
+#				print("$b must be after $a ");
 				$cmp=-1;
 			}
 		} 
-		if(defined($brules{$a})) {
-			# if b must be before a, negative return
+		if(!$cmp && defined($brules{$a})) {
+			# if b must be before a, positive return
 			if(grep($_ == $b , @{$brules{$a}}) ) {
-				print("$b must be before $a ");
+#				print("$b must be before $a ");
 				$cmp=1; 
 			}
 		}
-		print("returning $cmp\n");
+#		print("returning $cmp\n");
 		return $cmp;
 		} @$book;
 
-		print Dumper \@sortedbook;
+#		print Dumper \@sortedbook;
 		$answer2+=$sortedbook[int(scalar(@sortedbook))/2];
 
 }

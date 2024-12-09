@@ -46,8 +46,8 @@ sub calculate {
 	my $to=shift;
 	my @opd=@_;
 
-#	print("Calculating target $tgt, rt $rt, to $to\n");
-#	print Dumper \@opd;
+	print("Calculating target $tgt, rt $rt, to $to\n");
+	print Dumper \@opd;
 
 	if(scalar @opd) {
 		return (
@@ -72,7 +72,7 @@ for my $try (@list) {
 	my $start=shift(@opds);
 	my @results=calculate($try->[0], $start, @opds);
 
-#	print Dumper \@results;
+	print Dumper \@results;
 
 	print("--- Success!") if(grep($_==$try->[0] , @results));
 

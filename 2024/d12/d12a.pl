@@ -33,11 +33,11 @@ while(scalar @next) {
 	my ($r, $c)=@{shift(@next)};
 	my $f=0;
 
-	printf("$r, $c (%d left) - ", scalar @next);
+#	printf("$r, $c (%d left) - ", scalar @next);
 
 	next if(defined $fence{"$r,$c"});
 
-	print("Checking\n");
+#	print("Checking\n");
 
 	my $thisa=(defined $plan{"$r,$c"} ? $plan{"$r,$c"} : $areas++);
 
@@ -79,7 +79,7 @@ while(scalar @next) {
 my $answer=0;
 
 foreach my $ar(0..$areas-1) {
-	printf("Area $ar - %s - %d * %d - %d\n", $areatype{$ar}, $arealist{$ar}, $fencelist{$ar}, $arealist{$ar}*$fencelist{$ar});
+#	printf("Area $ar - %s - %d * %d - %d\n", $areatype{$ar}, $arealist{$ar}, $fencelist{$ar}, $arealist{$ar}*$fencelist{$ar});
 	$answer+=$arealist{$ar}*$fencelist{$ar};
 }
 
@@ -91,7 +91,7 @@ foreach my $k(keys %areastart) {
 	my @points=sort {$a->[0]*$w+$a->[1] <=> $b->[0]*$w+$b->[1] } @{$areastart{$k}};
 	my $korners=0;
 
-	printf("Area $k has %d squares, first is %d, %d\n", scalar @points, $points[0][0], $points[0][1]);
+#	printf("Area $k has %d squares, first is %d, %d\n", scalar @points, $points[0][0], $points[0][1]);
 
 	for my $pt(@points) {
 		my $corners=0;
@@ -141,12 +141,11 @@ foreach my $k(keys %areastart) {
 				}
 			}
 		}
-		print("Square $r, $c - $corners corners\n");
 		$korners+=$corners;
 
 	}
 
-	printf("Area $k - %s - %d * %d - %d\n", $areatype{$k}, $arealist{$k}, $korners, $korners * $arealist{$k});
+#	printf("Area $k - %s - %d * %d - %d\n", $areatype{$k}, $arealist{$k}, $korners, $korners * $arealist{$k});
 
 	$answer2+=$korners * $arealist{$k}
 }

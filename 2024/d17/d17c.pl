@@ -93,7 +93,6 @@ printf("Answer: %s\n", join(',', @out));
 
 my $done=0;
 my $target=$prog[3];
-#my $guess=$prog[3];
 for my $i(4..(@prog-1)) {
 	my $t=$prog[$i];
 	$target="$target,$t";
@@ -109,7 +108,7 @@ for my $i(0..$digits-1) {
 	my $done=0;
 	while(!$done) {
 		my @o=run(@prog);
-		printf("Target: $target\nResult: %s\n", join(',', run(@prog)));
+#		printf("Target: $target\nResult: %s\n", join(',', run(@prog)));
 		if($o[$digits-1-$i]==$prog[$digits+2-$i]) {
 			my $match=1;
 			for my $j($digits-$i..$digits-1) {
